@@ -2,7 +2,7 @@ package api
 
 import (
 	"encoding/json"
-	"final/pkg/db/nexdate"
+	"final/pkg/nexdate"
 	"fmt"
 	"net/http"
 	"os"
@@ -14,24 +14,36 @@ import (
 const dateFormat = "20060102"
 
 func nextDayHandler(w http.ResponseWriter, r *http.Request) {
+	// Проверяем, что метод запроса — GET
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Получаем параметры запроса
 	nowParam := r.FormValue("now")
 	dateParam := r.FormValue("date")
 	repeatParam := r.FormValue("repeat")
 
+	// Определяем текущую дату
 	now := time.Now()
 	if nowParam != "" {
 		parsedNow, err := time.Parse(dateFormat, nowParam)
-		if err == nil {
-			now = parsedNow
+		if err != nil {
+			http.Error(w, "Invalid 'now' parameter format", http.StatusBadRequest)
+			return
 		}
+		now = parsedNow
 	}
 
+	// Вычисляем следующую дату
 	result, err := nexdate.NextDate(now, dateParam, repeatParam)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
+	// Возвращаем результат
 	fmt.Fprintln(w, result)
 }
 

@@ -3,7 +3,7 @@ package api
 import (
 	"encoding/json"
 	"final/pkg/db"
-	"final/pkg/db/nexdate"
+	"final/pkg/nexdate"
 	"fmt"
 	"net/http"
 	"time"
