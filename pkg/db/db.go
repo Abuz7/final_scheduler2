@@ -22,30 +22,26 @@ CREATE INDEX idx_date ON scheduler(date);
 `
 
 // Init initializes the SQLite database
-func Init(dbFile string) error {
+func Init(dbFile string) (*sql.DB, error) {
 	_, err := os.Stat(dbFile)
 	if os.IsNotExist(err) {
 		// Файл не существует, создадим базу данных
 		db, err = sql.Open("sqlite", dbFile)
 		if err != nil {
-			return fmt.Errorf("failed to open database: %v", err)
+			return nil, fmt.Errorf("failed to open database: %v", err)
 		}
-		defer db.Close()
-
 		_, err = db.Exec(schema)
 		if err != nil {
-			return fmt.Errorf("failed to execute schema: %v", err)
+			return nil, fmt.Errorf("failed to execute schema: %v", err)
 		}
 	} else {
 		// Файл существует, просто открываем базу
 		db, err = sql.Open("sqlite", dbFile)
 		if err != nil {
-			return fmt.Errorf("failed to open database: %v", err)
+			return nil, fmt.Errorf("failed to open database: %v", err)
 		}
-		//defer db.Close()
 	}
-
-	return nil
+	return db, nil
 }
 
 // GetDB returns the database reference
