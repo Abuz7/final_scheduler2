@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+const dateFormat = "20060102"
+
 func afterNow(date, now time.Time) bool {
 	return date.After(now)
 }
@@ -16,7 +18,7 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 		return "", errors.New("параметр repeat не может быть пустым")
 	}
 
-	date, err := time.Parse("20060102", dstart)
+	date, err := time.Parse(dateFormat, dstart)
 	if err != nil {
 		return "", errors.New("неверный формат даты dstart")
 	}
@@ -38,14 +40,14 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 		for {
 			date = date.AddDate(0, 0, interval)
 			if afterNow(date, now) {
-				return date.Format("20060102"), nil
+				return date.Format(dateFormat), nil
 			}
 		}
 	case "y":
 		for {
 			date = date.AddDate(1, 0, 0)
 			if afterNow(date, now) {
-				return date.Format("20060102"), nil
+				return date.Format(dateFormat), nil
 			}
 		}
 	default:

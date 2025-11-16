@@ -15,6 +15,8 @@ type Task struct {
 	Repeat  string `json:"repeat"`
 }
 
+const dateFormat = "20060102"
+
 func AddTask(task *Task) (int64, error) {
 	var id int64
 	query := `INSERT INTO scheduler (date, title, comment, repeat) VALUES (?, ?, ?, ?)`
@@ -29,7 +31,7 @@ func isValidDate(dateStr string) bool {
 	if len(dateStr) != 8 {
 		return false
 	}
-	_, err := time.Parse("20060102", dateStr)
+	_, err := time.Parse(dateFormat, dateStr)
 	return err == nil
 }
 

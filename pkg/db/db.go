@@ -11,7 +11,7 @@ import (
 var db *sql.DB
 
 const schema = `
-CREATE TABLE scheduler (
+CREATE TABLE IF NOT EXISTS scheduler (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     date CHAR(8) NOT NULL,
     title VARCHAR(255) NOT NULL,
@@ -42,6 +42,7 @@ func Init(dbFile string) error {
 		if err != nil {
 			return fmt.Errorf("failed to open database: %v", err)
 		}
+		//defer db.Close()
 	}
 
 	return nil
@@ -68,7 +69,9 @@ func Tasks(limit int) ([]*Task, error) {
 		}
 		tasks = append(tasks, &task)
 	}
-
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 	return tasks, nil
 }
 func DeleteTask(id string) error {

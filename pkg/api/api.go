@@ -2,7 +2,7 @@ package api
 
 import (
 	"encoding/json"
-	"final/pkg/api/nexdate"
+	"final/pkg/db/nexdate"
 	"fmt"
 	"net/http"
 	"os"
@@ -35,15 +35,23 @@ func nextDayHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, result)
 }
 
+func init() {
+	// Загружаем конфигурацию один раз при старте
+	requiredPassword = os.Getenv("TODO_PASSWORD")
+}
 func Init() {
+
 	http.HandleFunc("/api/signin", signinHandler)
 	http.HandleFunc("/api/nextdate", nextDayHandler)
 	http.HandleFunc("/api/task", auth(taskHandler))
-	http.HandleFunc("/api/tasks", auth(tasksHandler50))
+	http.HandleFunc("/api/tasks", auth(GetTasks))
 	http.HandleFunc("/api/task/done", auth(TaskDoneHandler))
 }
 
-var jwtKey = []byte("a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6")
+var (
+	jwtKey           = []byte("a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6")
+	requiredPassword string
+)
 
 type Credentials struct {
 	Password string `json:"password"`
@@ -94,14 +102,12 @@ func signinHandler(w http.ResponseWriter, r *http.Request) {
 }
 func auth(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		pass := os.Getenv("TODO_PASSWORD")
-		if len(pass) > 0 {
+		if len(requiredPassword) > 0 {
 			cookie, err := r.Cookie("token")
 			if err != nil {
-				http.Error(w, "Authentification required", http.StatusUnauthorized)
+				http.Error(w, "Authentication required", http.StatusUnauthorized)
 				return
 			}
-
 			tokenString := cookie.Value
 			token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -109,21 +115,19 @@ func auth(next http.HandlerFunc) http.HandlerFunc {
 				}
 				return jwtKey, nil
 			})
-
 			if err != nil || !token.Valid {
-				http.Error(w, "Authentification required", http.StatusUnauthorized)
+				http.Error(w, "Authentication required", http.StatusUnauthorized)
 				return
 			}
-
 			// Проверка хэша пароля в токене
 			if claims, ok := token.Claims.(jwt.MapClaims); ok {
 				storedPasswordHash := claims["password_hash"].(string)
-				if storedPasswordHash != pass {
-					http.Error(w, "Authentification required", http.StatusUnauthorized)
+				if storedPasswordHash != requiredPassword {
+					http.Error(w, "Authentication required", http.StatusUnauthorized)
 					return
 				}
 			} else {
-				http.Error(w, "Authentification required", http.StatusUnauthorized)
+				http.Error(w, "Authentication required", http.StatusUnauthorized)
 				return
 			}
 		}
